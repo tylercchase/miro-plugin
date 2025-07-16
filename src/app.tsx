@@ -3,19 +3,25 @@ import { createRoot } from "react-dom/client";
 import "../src/assets/style.css";
 import { FC, useEffect } from "react";
 import {
-  Shape,
-  ShapeStyle,
+  StickyNote,
+  StickyNoteColor,
+  StickyNoteStyle,
 } from "@mirohq/websdk-types";
 
-let boardShapes: Shape[]
+let boardNotes: StickyNote[]
 async function setupBoard() {
   // we want a 40x40 space of shapes.
   // make it the first time, afterwards grab
-  boardShapes =  await miro.board.get({
-    type: "shape",
+  boardNotes =  await miro.board.get({
+    type: "sticky_note",
   })
-  boardShapes.reverse(); // I want it top->bottom left->right
-  // console.log(boardShapes)
+  boardNotes.sort((a: StickyNote,b: StickyNote): number => {
+    if(a.y < b.y) {return 1}
+    else if(a.y > b.y){ return -1}
+    else {return a.x < b.x ? 1 : -1}
+  })
+  boardNotes.reverse(); // I want it top->bottom left->right
+  console.log(boardNotes);
 
   const video = document.getElementById("bad-apple-video") as HTMLVideoElement;
 
@@ -24,70 +30,60 @@ async function setupBoard() {
     animate();
   });
 }
-
 function animate() {
   const video = document.getElementById("bad-apple-video") as HTMLVideoElement;
   const canvas = document.getElementById(
     "bad-apple-canvas"
   ) as HTMLCanvasElement;
-  const width = 20;
-  const height = 20;
+  const width = 100;
+  const height = 100;
 
   const context = canvas.getContext("2d") as CanvasRenderingContext2D;
   context.drawImage(video, 0, 0);
 
   const imageData = context.getImageData(0, 0, width, height);
   const data = imageData.data;
-  const step = 1;
+  const step = 10;
   for (let x = 0; x < width; x += step) {
     for (let y = 0; y < height; y += step) {
-      const i = y * width + x;
+      const i = (y * width + x) * 4;
+      const boardIndex = (y/step * 10 + (x/step));
+      console.log(boardIndex)
       if (data[i] === 0) {
-        console.log(boardShapes[i])
-        // setShapeFill(boardShapes[i], true)
+        setShapeFill(boardNotes[boardIndex], true)
         // should show black
       } else {
-        // setShapeFill(boardShapes[i], false)
+        setShapeFill(boardNotes[boardIndex], false)
         // should show white 
       }
     }
   }
-  setTimeout(requestAnimationFrame.bind(null, animate), 10);
+  setTimeout(requestAnimationFrame.bind(null, animate), 10000);
   // requestAnimationFrame(animate);
 }
 
-async function setShapeFill(shape: Shape, isDrawn: bool) {
+async function setShapeFill(shape: StickyNote, isDrawn: bool) {
   let style = {
-    fillColor: isDrawn ? "#0000ff" : "#ffffff", // Default shape fill color: transparent (no fill)
-    fillOpacity: 1.0, // Default fill color opacity: no opacity
-  } as ShapeStyle;
+    fillColor: isDrawn ? 'black' : 'light_pink'//StickyNoteColor.Black : StickyNoteColor.LightPink, // Default shape fill color: transparent (no fill)
+  } as StickyNoteStyle;
   shape.style = style;
+  shape.sync();
 }
 
 function onStartButton() {
   const video = document.getElementById('bad-apple-video') as HTMLVideoElement;
   video.play();
-
+  // video.currentTime = 20.0;
+  animate();
 }
-
 const App: FC = () => {
   useEffect(() => {
     setupBoard();
   }, []);
 
   return (
+    <div>
     <div className="grid wrapper">
-      <div className="cs1 ce12">
-        <img src="/src/assets/congratulations.png" alt="" />
-      </div>
-      <div className="cs1 ce12">
-        <h1>Congratulations!</h1>
-        <p>You've just created your first Miro app!</p>
-        <p>
-          To explore more and build your own app, see the Miro Developer
-          Platform documentation.
-        </p>
-      </div>
       <button onClick={onStartButton}>Start</button>
       <video
         src="/src/assets/bad_apple.mp4"
@@ -96,6 +92,9 @@ const App: FC = () => {
         controls
       ></video>
       <canvas id="bad-apple-canvas"></canvas>
+    </div>
+    <div className="grid wrapper">
+    </div>
     </div>
   );
 };
