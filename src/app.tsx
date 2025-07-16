@@ -30,6 +30,7 @@ function setupBoard() {
  // make it the first time, afterwards grab
  const video = document.getElementById('bad-apple-video') as HTMLVideoElement;
 video.addEventListener('loadeddata', () => {
+	video.play();
 animate()
 })
 }
@@ -49,7 +50,11 @@ function animate() {
  for(let x=0; x < width; x += step) {
 	for(let y = 0; y < height; y += step) {
 		const i = (y * width + x)
-		console.log(data[i])
+		if(data[i] === 0) {
+			// should show white
+		} else {
+			// should show black (gray?)
+		}
 	}
  }
  requestAnimationFrame(animate)
