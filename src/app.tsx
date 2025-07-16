@@ -7,19 +7,20 @@ import {
   ShapeStyle,
 } from "@mirohq/websdk-types";
 
-let stickyNotes: { [x: number]: { [y: number]: Shape } } = {};
-
-function setupBoard() {
+let boardShapes: Shape[]
+async function setupBoard() {
   // we want a 40x40 space of shapes.
   // make it the first time, afterwards grab
-  let shapes = miro.board.get({
+  boardShapes =  await miro.board.get({
     type: "shape",
-  });
-  console.log(shapes)
+  })
+  boardShapes.reverse(); // I want it top->bottom left->right
+  // console.log(boardShapes)
 
   const video = document.getElementById("bad-apple-video") as HTMLVideoElement;
+
+
   video.addEventListener("loadeddata", () => {
-    video.play();
     animate();
   });
 }
@@ -29,8 +30,8 @@ function animate() {
   const canvas = document.getElementById(
     "bad-apple-canvas"
   ) as HTMLCanvasElement;
-  const width = 40;
-  const height = 40;
+  const width = 20;
+  const height = 20;
 
   const context = canvas.getContext("2d") as CanvasRenderingContext2D;
   context.drawImage(video, 0, 0);
@@ -42,16 +43,20 @@ function animate() {
     for (let y = 0; y < height; y += step) {
       const i = y * width + x;
       if (data[i] === 0) {
-        // should show white
+        console.log(boardShapes[i])
+        // setShapeFill(boardShapes[i], true)
+        // should show black
       } else {
-        // should show black (gray?)
+        // setShapeFill(boardShapes[i], false)
+        // should show white 
       }
     }
   }
-  requestAnimationFrame(animate);
+  setTimeout(requestAnimationFrame.bind(null, animate), 10);
+  // requestAnimationFrame(animate);
 }
 
-function setShapeFill(shape: Shape, isDrawn: bool) {
+async function setShapeFill(shape: Shape, isDrawn: bool) {
   let style = {
     fillColor: isDrawn ? "#0000ff" : "#ffffff", // Default shape fill color: transparent (no fill)
     fillOpacity: 1.0, // Default fill color opacity: no opacity
@@ -59,6 +64,11 @@ function setShapeFill(shape: Shape, isDrawn: bool) {
   shape.style = style;
 }
 
+function onStartButton() {
+  const video = document.getElementById('bad-apple-video') as HTMLVideoElement;
+  video.play();
+
+}
 
 const App: FC = () => {
   useEffect(() => {
@@ -78,6 +88,7 @@ const App: FC = () => {
           Platform documentation.
         </p>
       </div>
+      <button onClick={onStartButton}>Start</button>
       <video
         src="/src/assets/bad_apple.mp4"
         id="bad-apple-video"
