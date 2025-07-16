@@ -1,18 +1,38 @@
-import * as React from 'react';
 import {createRoot} from 'react-dom/client';
 
 import '../src/assets/style.css';
+import { FC, useEffect } from 'react';
+import { StickyNote, StickyNoteColor } from '@mirohq/websdk-types';
+import { StickyNoteStyle } from '@mirohq/websdk-types/stable/index';
+
+let stickyNotes : {[x: number]: {[y: number]: StickyNote}}= {
+}
 
 async function addSticky() {
   const stickyNote = await miro.board.createStickyNote({
-    content: 'Hello, World!',
+    content: 'Hello, World2!',
   });
-
+  stickyNotes[0] = stickyNotes[0] || {}
+  stickyNotes[0][0] = stickyNote;
+  setInterval(updateStickyNotes, 1000)
   await miro.board.viewport.zoomTo(stickyNote);
 }
+let toggle = false
 
-const App: React.FC = () => {
-  React.useEffect(() => {
+async function updateStickyNotes() {
+	let style: StickyNoteStyle =  {
+	fillColor: toggle ? 'black' : 'gray' as StickyNoteColor, // Default value: light yellow
+	textAlign: 'center', // Default alignment: center
+	textAlignVertical: 'middle', // Default alignment: middle
+	}
+	toggle = !toggle;
+	stickyNotes[0][0].style = style;
+	console.log('test');
+	stickyNotes[0][0].sync();
+}
+
+const App: FC = () => {
+  useEffect(() => {
     addSticky();
   }, []);
 
@@ -42,6 +62,6 @@ const App: React.FC = () => {
   );
 };
 
-const container = document.getElementById('root');
+const container = document.getElementById('root') as HTMLElement;
 const root = createRoot(container);
 root.render(<App />);
